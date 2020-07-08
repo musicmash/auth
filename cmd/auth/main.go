@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"time"
 
@@ -11,13 +12,17 @@ import (
 	"github.com/musicmash/auth/internal/backends/firebase"
 )
 
-const (
-	serviceAccountFilePath = "serviceAccountKey.json"
-)
-
 func main() {
+	// define cli args
+	serviceAccountFilePath := flag.String(
+		"path-to-service-account",
+		"/etc/auth/serviceAccountKey.json",
+		"abs path to serviceAccountKey.json",
+	)
+	flag.Parse()
+
 	// make backend
-	backend, err := firebase.New(serviceAccountFilePath)
+	backend, err := firebase.New(*serviceAccountFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
