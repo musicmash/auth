@@ -6,5 +6,6 @@ require (
 	firebase.google.com/go v3.13.0+incompatible
 	firebase.google.com/go/v4 v4.0.0 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible
+	github.com/rs/zerolog v1.19.0
 	google.golang.org/api v0.17.0
 )

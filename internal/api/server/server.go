@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/musicmash/auth/internal/log"
 )
 
 type Server struct {
@@ -32,7 +34,7 @@ func New(router http.Handler, opts *Options) *Server {
 }
 
 func (s *Server) ListenAndServe() error {
-	fmt.Printf("server is ready to handle requests at: %v", s.Addr)
+	log.Infof("server is ready to handle requests at: %v", s.Addr)
 	return s.server.ListenAndServe()
 }
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"log"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -10,6 +10,7 @@ import (
 	"github.com/musicmash/auth/internal/api/router"
 	"github.com/musicmash/auth/internal/api/server"
 	"github.com/musicmash/auth/internal/backends/firebase"
+	"github.com/musicmash/auth/internal/log"
 )
 
 func main() {
@@ -21,10 +22,13 @@ func main() {
 	)
 	flag.Parse()
 
+	// setup logger
+	log.SetWriters(log.GetConsoleWriter())
+
 	// make backend
 	backend, err := firebase.New(*serviceAccountFilePath)
 	if err != nil {
-		log.Fatal(err)
+		exitIfError(err)
 	}
 
 	// make router
@@ -43,5 +47,14 @@ func main() {
 	})
 
 	// and finally listen
-	log.Fatal(server.ListenAndServe())
+	exitIfError(server.ListenAndServe())
+}
+
+func exitIfError(err error) {
+	if err == nil {
+		return
+	}
+
+	log.Error(err.Error())
+	os.Exit(2)
 }
