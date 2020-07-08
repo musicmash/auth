@@ -1,12 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
-	"golang.org/x/net/context"
-
-	firebase "firebase.google.com/go"
-	"google.golang.org/api/option"
+	"github.com/musicmash/auth/internal/backends/firebase"
 )
 
 const (
@@ -15,22 +13,15 @@ const (
 )
 
 func main() {
-	opt := option.WithCredentialsFile(serviceAccountFilePath)
-	app, err := firebase.NewApp(context.Background(), nil, opt)
+	backend, err := firebase.New(serviceAccountFilePath)
 	if err != nil {
-		log.Fatalf("error initializing app: %v\n", err)
+		log.Fatal(err)
 	}
 
-	client, err := app.Auth(context.Background())
+	uid, err := backend.GetUserID(idToken)
 	if err != nil {
-		log.Fatalf("error getting Auth client: %v\n", err)
+		log.Fatal(err)
 	}
 
-	token, err := client.VerifyIDToken(context.Background(), idToken)
-	if err != nil {
-		log.Fatalf("error verifying ID token: %v\n", err)
-	}
-
-	log.Printf("Verified ID token: %v\n", token)
-	log.Printf("user_id: %v", token.UID)
+	fmt.Printf("user_id: %v\n", uid)
 }
