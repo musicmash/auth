@@ -1,27 +1,42 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"time"
 
+	"github.com/go-chi/chi"
+	"github.com/musicmash/auth/internal/api/handlers/auth"
+	"github.com/musicmash/auth/internal/api/router"
+	"github.com/musicmash/auth/internal/api/server"
 	"github.com/musicmash/auth/internal/backends/firebase"
 )
 
 const (
 	serviceAccountFilePath = "serviceAccountKey.json"
-	idToken                = "xxx"
 )
 
 func main() {
+	// make backend
 	backend, err := firebase.New(serviceAccountFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	uid, err := backend.GetUserID(idToken)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// make router
+	authHandler := auth.NewHandler(backend)
+	r := chi.NewRouter()
+	r.Post("/auth", authHandler.DoAuth)
+	router := router.New(r)
 
-	fmt.Printf("user_id: %v\n", uid)
+	// make http server
+	server := server.New(router, &server.Options{
+		IP:           "0.0.0.0",
+		Port:         1200,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  10 * time.Second,
+	})
+
+	// and finally listen
+	log.Fatal(server.ListenAndServe())
 }
