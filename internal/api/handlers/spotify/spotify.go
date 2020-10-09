@@ -1,37 +1,72 @@
 package spotify
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"time"
 
+	"github.com/musicmash/auth/internal/backend"
 	"github.com/musicmash/auth/internal/log"
-	"github.com/zmb3/spotify"
+)
+
+const (
+	state = "auth"
 )
 
 type Handler struct {
-	state string
-	auth  *spotify.Authenticator
+	b *backend.Backend
 }
 
-func NewHandler(state string, auth *spotify.Authenticator) *Handler {
-	return &Handler{state: state, auth: auth}
+func NewHandler(b *backend.Backend) *Handler {
+	return &Handler{b: b}
+}
+
+func newSidCookie(sid string) *http.Cookie {
+	return &http.Cookie{
+		Name:     "sid",
+		Value:    sid,
+		Path:     "/v1",
+		Expires:  time.Now().UTC().AddDate(0, 3, 0),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+}
+
+func validateQuery(values url.Values) error {
+	if e := values.Get("error"); e != "" {
+		return fmt.Errorf("auth failed: %v", e)
+	}
+
+	code := values.Get("code")
+	if code == "" {
+		return errors.New("didn't get access code")
+	}
+
+	actualState := values.Get("state")
+	if actualState != state {
+		return errors.New("redirect state parameter doesn't match")
+	}
+
+	return nil
 }
 
 func (h *Handler) DoAuth(w http.ResponseWriter, r *http.Request) {
-	token, err := h.auth.Token(h.state, r)
-	if err != nil {
-		http.Error(w, "couldn't get token", http.StatusUnauthorized)
-		log.Errorf("couldn't get token: %v", err)
-		return
+	values := r.URL.Query()
+	if err := validateQuery(values); err != nil {
+		log.Error(err.Error())
+		http.Error(w, "bad request", http.StatusBadRequest)
 	}
 
-	client := h.auth.NewClient(token)
-	user, err := client.CurrentUser()
+	sid, err := h.b.GetSession(values.Get("code"))
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
-		log.Errorf("couldn't get user info: %v", err)
+		log.Error(err.Error())
 		return
 	}
 
-	_, _ = fmt.Fprintf(w, "logged as %s", user.ID)
+	http.SetCookie(w, newSidCookie(sid))
+	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
 }
