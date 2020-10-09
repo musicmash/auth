@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/musicmash/auth/internal/db"
 	"github.com/musicmash/auth/internal/log"
 	"github.com/musicmash/auth/internal/secure"
 	"github.com/zmb3/spotify"
@@ -12,9 +13,10 @@ import (
 
 type Backend struct {
 	config *oauth2.Config
+	mgr    *db.Mgr
 }
 
-func New(redirectURL, appID, appSecret string, scopes ...string) *Backend {
+func New(mgr *db.Mgr, redirectURL, appID, appSecret string, scopes ...string) *Backend {
 	cfg := oauth2.Config{
 		ClientID:     appID,
 		ClientSecret: appSecret,
@@ -25,11 +27,19 @@ func New(redirectURL, appID, appSecret string, scopes ...string) *Backend {
 			TokenURL: spotify.TokenURL,
 		},
 	}
-	return &Backend{config: &cfg}
+	return &Backend{config: &cfg, mgr: mgr}
 }
 
 func (b *Backend) newSpotifyClient(token *oauth2.Token) spotify.Client {
 	return spotify.NewClient(b.config.Client(context.Background(), token))
+}
+
+func getUserPhoto(images []spotify.Image) *string {
+	if len(images) == 0 {
+		return nil
+	}
+
+	return &images[0].URL
 }
 
 func (b *Backend) GetSession(code string) (string, error) {
@@ -48,10 +58,20 @@ func (b *Backend) GetSession(code string) (string, error) {
 
 	log.Infof("user successfully logged in: %s", user.ID)
 
-	// check if user exists in the db
+	// ensure that user exists in the db
+	err = b.mgr.EnsureUserExists(&db.User{Name: user.ID, Photo: getUserPhoto(user.Images)})
+	if err != nil {
+		return "", fmt.Errorf("can't ensure that user exists: %w", err)
+	}
+
 	// generate sha256 string
 	sid := secure.GenerateHash(token.AccessToken)
+
 	// save session into the db
+	err = b.mgr.CreateSession(&db.Session{UserName: user.ID, Value: sid})
+	if err != nil {
+		return "", fmt.Errorf("can't create new user session: %w", err)
+	}
 
 	return sid, nil
 }

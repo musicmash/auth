@@ -12,3 +12,15 @@ image:
 		--build-arg BUILD_TIME="$(BUILD_TIME)" \
 		--compress \
 		-t auth:latest .
+
+db-status:
+	sql-migrate status --env=staging
+
+db-up:
+	sql-migrate up --env=staging
+
+db-redo:
+	sql-migrate redo --env=staging
+
+db-down:
+	sql-migrate down --env=staging
