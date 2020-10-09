@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/musicmash/auth/internal/api/handlers/auth"
 	"github.com/musicmash/auth/internal/api/handlers/spotify"
 	"github.com/musicmash/auth/internal/api/server"
 	"github.com/musicmash/auth/internal/backend"
@@ -45,6 +46,7 @@ func main() {
 	redirectURL := fmt.Sprintf("https://%s%s", *domainName, callbackPath)
 	b := backend.New(mgr, redirectURL, *spotifyAppID, *spotifyAppSecret)
 	spotifyCallbackHandler := spotify.NewHandler(b)
+	authHandler := auth.NewHandler(mgr)
 
 	// setup logger
 	log.SetWriters(log.GetConsoleWriter())
@@ -54,6 +56,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Logger)
 	r.Get(callbackPath, spotifyCallbackHandler.DoAuth)
+	r.Post("/auth", authHandler.DoAuth)
 
 	// make http server
 	server := server.New(r, &server.Options{
