@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/musicmash/auth/internal/log"
+	"github.com/musicmash/auth/internal/secure"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
 )
@@ -49,9 +50,10 @@ func (b *Backend) GetSession(code string) (string, error) {
 
 	// check if user exists in the db
 	// generate sha256 string
+	sid := secure.GenerateHash(token.AccessToken)
 	// save session into the db
 
-	return token.AccessToken, nil
+	return sid, nil
 }
 
 func (b *Backend) GetAuthURL(state string) string {
