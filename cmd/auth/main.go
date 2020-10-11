@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -13,38 +13,49 @@ import (
 	"github.com/musicmash/auth/internal/api/handlers/spotify"
 	"github.com/musicmash/auth/internal/api/server"
 	"github.com/musicmash/auth/internal/backend"
+	"github.com/musicmash/auth/internal/config"
 	"github.com/musicmash/auth/internal/db"
 	"github.com/musicmash/auth/internal/log"
+	"github.com/musicmash/auth/internal/version"
 )
 
 func main() {
-	const callbackPath = "/v1/spotify/auth-callback"
+	_ = flag.Bool("version", false, "Show build info and exit")
+	if versionRequired() {
+		_, _ = fmt.Fprintln(os.Stdout, version.FullInfo)
+		os.Exit(0)
+	}
 
-	// parse cli args
-	dbDSN := flag.String("db-dsn", os.Getenv("DATABASE_DSN"), "db connection string")
-	domainName := flag.String("nginx-domain-name", os.Getenv("NGINX_DOMAIN_NAME"), "domain name for building redirect url")
-	spotifyAppID := flag.String("spotify-app-id", os.Getenv("SPOTIFY_ID"), "spotify application client id")
-	spotifyAppSecret := flag.String("spotify-app-secret", os.Getenv("SPOTIFY_SECRET"), "spotify application secret key")
+	// parse conf
+	conf := config.New()
+	conf.FlagSet()
+	configPath := flag.String("config", "", "Path to auth.yml config")
+	_ = flag.Bool("help", false, "Show this message and exit")
+	if helpRequired() {
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+
 	flag.Parse()
+	if *configPath != "" {
+		if err := conf.LoadFromFile(*configPath); err != nil {
+			exitIfError(err)
+		}
 
-	// validate cli args
-	if len(*dbDSN) == 0 {
-		exitIfError(errors.New("database connection url is empty"))
+		// set not provided flags as config values
+		conf.FlagReload()
+
+		// override config values with provided flags
+		flag.Parse()
 	}
+	exitIfError(validateConfig(conf))
 
-	if len(*domainName) == 0 {
-		exitIfError(errors.New("nginx domain name is empty, so we can't build redirect url"))
-	}
-
-	if len(*spotifyAppID) == 0 || len(*spotifyAppSecret) == 0 {
-		exitIfError(errors.New("spotify application credentials are empty"))
-	}
-
-	mgr, err := db.New(*dbDSN)
+	mgr, err := db.New(conf.DB.GetConnString())
 	exitIfError(err)
 
-	redirectURL := fmt.Sprintf("https://%s%s", *domainName, callbackPath)
-	b := backend.New(mgr, redirectURL, *spotifyAppID, *spotifyAppSecret)
+	const callbackPath = "/v1/spotify/auth-callback"
+	redirectURL := fmt.Sprintf("https://%s%s", conf.HTTP.DomainName, callbackPath)
+	b := backend.New(mgr, redirectURL, conf.SpotifyApplication.ID, conf.SpotifyApplication.Secret)
 	spotifyCallbackHandler := spotify.NewHandler(b)
 	authHandler := auth.NewHandler(mgr)
 
@@ -60,17 +71,54 @@ func main() {
 
 	// make http server
 	server := server.New(r, &server.Options{
-		IP:           "0.0.0.0",
-		Port:         1200,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  10 * time.Second,
+		IP:           conf.HTTP.IP,
+		Port:         conf.HTTP.Port,
+		ReadTimeout:  conf.HTTP.ReadTimeout,
+		WriteTimeout: conf.HTTP.WriteTimeout,
+		IdleTimeout:  conf.HTTP.IdleTimeout,
 	})
 
 	log.Infof("Please log in to Spotify by visiting the following page in your browser: %s", b.GetAuthURL("auth"))
 
 	// and finally listen
 	exitIfError(server.ListenAndServe())
+}
+
+func validateConfig(conf *config.AppConfig) error {
+	if conf.Log.Level == "" {
+		conf.Log.Level = "info"
+	}
+
+	if conf.HTTP.Port < 0 || conf.HTTP.Port > 65535 {
+		return errors.New("invalid port: value should be in range: 0 < value < 65535")
+	}
+
+	if len(conf.HTTP.DomainName) == 0 {
+		return errors.New("nginx domain name is empty, so we can't build redirect url")
+	}
+
+	if len(conf.SpotifyApplication.ID) == 0 || len(conf.SpotifyApplication.Secret) == 0 {
+		return errors.New("spotify application credentials are empty")
+	}
+
+	return nil
+}
+
+func isArgProvided(argName string) bool {
+	for _, arg := range os.Args {
+		if strings.Contains(arg, argName) {
+			return true
+		}
+	}
+	return false
+}
+
+func helpRequired() bool {
+	return isArgProvided("-help")
+}
+
+func versionRequired() bool {
+	return isArgProvided("-version")
 }
 
 func exitIfError(err error) {

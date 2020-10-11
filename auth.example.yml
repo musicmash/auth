@@ -1,0 +1,21 @@
+---
+http:
+  ip: 0.0.0.0
+  port: 1200
+  domain_name: musicmash.me
+
+db:
+  host: musicmash.db
+  port: 5432
+  name: auth
+  login: auth
+  password: auth_pass
+
+log:
+  level: INFO
+
+# grab app data here
+# https://developer.spotify.com/dashboard/applications
+spotify:
+  id: "client_id"
+  secret: "client_secret"
