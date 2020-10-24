@@ -16,11 +16,11 @@ const (
 )
 
 type Handler struct {
-	b *backend.Backend
+	backend *backend.Backend
 }
 
 func NewHandler(b *backend.Backend) *Handler {
-	return &Handler{b: b}
+	return &Handler{backend: b}
 }
 
 func newSidCookie(sid string) *http.Cookie {
@@ -60,7 +60,7 @@ func (h *Handler) DoAuth(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 	}
 
-	sid, err := h.b.GetSession(values.Get("code"))
+	sid, err := h.backend.GetSession(values.Get("code"))
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		log.Error(err.Error())
