@@ -2,7 +2,6 @@ package spotify
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -35,11 +34,7 @@ func newSidCookie(sid string) *http.Cookie {
 	}
 }
 
-func validateQuery(values url.Values) error {
-	if e := values.Get("error"); e != "" {
-		return fmt.Errorf("auth failed: %v", e)
-	}
-
+func validateStateAndCode(values url.Values) error {
 	code := values.Get("code")
 	if code == "" {
 		return errors.New("didn't get access code")
@@ -55,7 +50,23 @@ func validateQuery(values url.Values) error {
 
 func (h *Handler) DoAuth(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
-	if err := validateQuery(values); err != nil {
+
+	if err := values.Get("error"); err != "" {
+		if err != "access_denied" {
+			log.Errorf("got '%v' error query when try to sync artists", err)
+		}
+
+		http.Redirect(w, r, "/", http.StatusMovedPermanently)
+		return
+	}
+
+	if err := validateStateAndCode(values); err != nil {
+		log.Error(err.Error())
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	if err := validateStateAndCode(values); err != nil {
 		log.Error(err.Error())
 		http.Error(w, "bad request", http.StatusBadRequest)
 	}
