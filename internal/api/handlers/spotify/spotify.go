@@ -31,7 +31,7 @@ func newSidCookie(sid string) *http.Cookie {
 		Expires:  time.Now().UTC().AddDate(0, 3, 0),
 		Secure:   true,
 		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	}
 }
 
