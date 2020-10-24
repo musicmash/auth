@@ -53,7 +53,7 @@ func main() {
 	mgr, err := db.New(conf.DB.GetConnString())
 	exitIfError(err)
 
-	const callbackPath = "/v1/spotify/auth-callback"
+	const callbackPath = "/v1/callbacks/spotify/auth"
 	redirectURL := fmt.Sprintf("https://%s%s", conf.HTTP.DomainName, callbackPath)
 	b := backend.New(mgr, redirectURL, conf.SpotifyApplication.ID, conf.SpotifyApplication.Secret)
 	spotifyCallbackHandler := spotify.NewHandler(b)
