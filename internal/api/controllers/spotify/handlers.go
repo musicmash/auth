@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/musicmash/auth/internal/backend"
 	"github.com/musicmash/auth/internal/log"
+	"github.com/musicmash/auth/internal/services/backend"
 )
 
 type Controller struct {

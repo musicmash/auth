@@ -12,10 +12,10 @@ import (
 	"syscall"
 
 	"github.com/musicmash/auth/internal/api"
-	"github.com/musicmash/auth/internal/backend"
 	"github.com/musicmash/auth/internal/config"
 	"github.com/musicmash/auth/internal/db"
 	"github.com/musicmash/auth/internal/log"
+	"github.com/musicmash/auth/internal/services/backend"
 	"github.com/musicmash/auth/internal/version"
 )
 

@@ -5,8 +5,8 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/musicmash/auth/internal/api/controllers/auth"
 	"github.com/musicmash/auth/internal/api/controllers/spotify"
-	"github.com/musicmash/auth/internal/backend"
 	"github.com/musicmash/auth/internal/db"
+	"github.com/musicmash/auth/internal/services/backend"
 )
 
 func GetRouter(mgr *db.Conn, backend *backend.Backend) chi.Router {
