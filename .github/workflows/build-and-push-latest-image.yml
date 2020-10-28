@@ -57,7 +57,7 @@ jobs:
             --target auth \
             --build-arg RELEASE=${GITHUB_REF##*/} \
             --build-arg COMMIT=${GITHUB_SHA} \
-            --build-arg BUILD_TIME=$(shell date -u '+%Y-%m-%dT%H:%M:%S') \
+            --build-arg BUILD_TIME=$(date -u '+%Y-%m-%dT%H:%M:%S') \
             --cache-from $IMAGE_NAME-builder-stage:latest \
             --cache-from $IMAGE_NAME:latest \
             --tag $IMAGE_NAME:latest \
