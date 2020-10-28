@@ -1,6 +1,6 @@
-FROM golang:latest as builder
+FROM golang:1-alpine as builder
 
-ENV CGO_ENABLED=1
+ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV GOARCH=amd64
 
@@ -15,12 +15,11 @@ COPY internal internal
 COPY go.mod go.mod
 
 RUN go build -v -a \
-    -installsuffix cgo \
-    -gcflags "all=-trimpath=$(GOPATH)" \
-    -ldflags '-linkmode external -extldflags "-static" -s -w \
-       -X ${PROJECT}/version.Release=${RELEASE} \
-       -X ${PROJECT}/version.Commit=${COMMIT} \
-       -X ${PROJECT}/version.BuildTime=${BUILD_TIME}"' \
+    -gcflags "all=-trimpath=${WORKDIR}" \
+    -ldflags "-w -s \
+       -X ${PROJECT}/internal/version.Release=${RELEASE} \
+       -X ${PROJECT}/internal/version.Commit=${COMMIT} \
+       -X ${PROJECT}/internal/version.BuildTime=${BUILD_TIME}" \
     -o /usr/local/bin/auth ./cmd/...
 
 FROM alpine:latest
