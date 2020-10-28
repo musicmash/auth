@@ -7,15 +7,16 @@ import (
 	"github.com/musicmash/auth/internal/log"
 )
 
-type Handler struct {
+
+type Controller struct {
 	mgr *db.Mgr
 }
 
-func NewHandler(mgr *db.Mgr) *Handler {
-	return &Handler{mgr: mgr}
+func New(mgr *db.Mgr) *Controller {
+	return &Controller{mgr: mgr}
 }
 
-func (h *Handler) DoAuth(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) DoAuth(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("sid")
 	if err != nil {
 		log.Info("someone forget to provided sid cookie")
@@ -29,7 +30,7 @@ func (h *Handler) DoAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := h.mgr.GetSession(cookie.Value)
+	session, err := c.mgr.GetSession(cookie.Value)
 	if err != nil {
 		log.Info("someone provided empty sid cookie")
 		w.WriteHeader(http.StatusUnauthorized)

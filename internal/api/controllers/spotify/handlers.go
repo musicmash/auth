@@ -1,25 +1,19 @@
 package spotify
 
 import (
-	"errors"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/musicmash/auth/internal/backend"
 	"github.com/musicmash/auth/internal/log"
 )
 
-const (
-	state = "auth"
-)
-
-type Handler struct {
+type Controller struct {
 	backend *backend.Backend
 }
 
-func NewHandler(b *backend.Backend) *Handler {
-	return &Handler{backend: b}
+func New(backend *backend.Backend) *Controller {
+	return &Controller{backend: backend}
 }
 
 func newSidCookie(sid string) *http.Cookie {
@@ -34,21 +28,7 @@ func newSidCookie(sid string) *http.Cookie {
 	}
 }
 
-func validateStateAndCode(values url.Values) error {
-	code := values.Get("code")
-	if code == "" {
-		return errors.New("didn't get access code")
-	}
-
-	actualState := values.Get("state")
-	if actualState != state {
-		return errors.New("redirect state parameter doesn't match")
-	}
-
-	return nil
-}
-
-func (h *Handler) DoAuth(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) DoAuth(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 
 	if err := values.Get("error"); err != "" {
@@ -71,7 +51,7 @@ func (h *Handler) DoAuth(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 	}
 
-	sid, err := h.backend.GetSession(values.Get("code"))
+	sid, err := c.backend.GetSession(values.Get("code"))
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		log.Error(err.Error())
