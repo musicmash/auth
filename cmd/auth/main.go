@@ -26,27 +26,23 @@ func main() {
 		os.Exit(0)
 	}
 
-	// parse conf
-	conf := config.New()
-	conf.FlagSet()
-	configPath := flag.String("config", "", "Path to auth.yml config")
 	_ = flag.Bool("help", false, "Show this message and exit")
 	if helpRequired() {
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
 
+	configPath := flag.String("config", "", "abs path to conf file")
 	flag.Parse()
-	if *configPath != "" {
-		if err := conf.LoadFromFile(*configPath); err != nil {
-			exitIfError(err)
-		}
 
-		// set not provided flags as config values
-		conf.FlagReload()
+	if *configPath == "" {
+		_, _ = fmt.Fprintln(os.Stdout, "provide abs path to config via --config argument")
+		return
+	}
 
-		// override config values with provided flags
-		flag.Parse()
+	conf, err := config.LoadFromFile(*configPath)
+	if err != nil {
+		exitIfError(err)
 	}
 	exitIfError(validateConfig(conf))
 

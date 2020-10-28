@@ -2,6 +2,7 @@ package config
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -10,9 +11,12 @@ func TestConfig_LoadFromFile(t *testing.T) {
 	// arrange
 	expected := AppConfig{
 		HTTP: HTTPConfig{
-			IP:         "0.0.0.0",
-			Port:       1200,
-			DomainName: "musicmash.me",
+			IP:           "0.0.0.0",
+			Port:         1200,
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  10 * time.Second,
+			DomainName:   "musicmash.me",
 		},
 		DB: DBConfig{
 			Host:     "musicmash.db",
@@ -31,10 +35,9 @@ func TestConfig_LoadFromFile(t *testing.T) {
 	}
 
 	// action
-	actual := AppConfig{}
-	err := actual.LoadFromFile("../../auth.example.yml")
+	conf, err := LoadFromFile("../../auth.example.yml")
 
 	// assert
 	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, expected, *conf)
 }
