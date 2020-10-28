@@ -10,7 +10,7 @@ ARG BUILD_TIME=unset
 ENV PROJECT=/go/src/github.com/musicmash/auth/internal
 
 WORKDIR /go/src/github.com/musicmash/auth
-COPY migrations /var/auth/migrations
+COPY migrations /etc/auth/migrations
 COPY cmd cmd
 COPY internal internal
 COPY go.mod go.mod
@@ -29,7 +29,7 @@ RUN addgroup -S auth && adduser -S auth -G auth
 USER auth
 WORKDIR /home/auth
 
-COPY --from=builder --chown=auth:auth /var/auth/migrations /var/auth/migrations
+COPY --from=builder --chown=auth:auth /etc/auth/migrations /etc/auth/migrations
 COPY --from=builder --chown=auth:auth /usr/local/bin/auth /usr/local/bin/auth
 
 ENTRYPOINT ["/usr/local/bin/auth"]
