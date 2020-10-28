@@ -63,6 +63,14 @@ func main() {
 
 	log.Info("connection to the db established")
 
+	if conf.DB.AutoMigrate {
+		log.Info("applying migrations..")
+		err = mgr.ApplyMigrations(conf.DB.MigrationsDir)
+		if err != nil {
+			exitIfError(fmt.Errorf("cant-t apply migrations: %v", err))
+		}
+	}
+
 	done := make(chan bool, 1)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)

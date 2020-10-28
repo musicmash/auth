@@ -24,6 +24,8 @@ func TestConfig_LoadFromFile(t *testing.T) {
 			Name:                  "auth",
 			Login:                 "auth",
 			Password:              "auth_pass",
+			AutoMigrate:           true,
+			MigrationsDir:         "file:///etc/artisync/migrations",
 			MaxOpenConnections:    10,
 			MaxIdleConnections:    10,
 			MaxConnectionIdleTime: 3 * time.Minute,
