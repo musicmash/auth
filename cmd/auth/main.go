@@ -1,17 +1,17 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/musicmash/auth/internal/api/handlers/auth"
-	"github.com/musicmash/auth/internal/api/handlers/spotify"
-	"github.com/musicmash/auth/internal/api/server"
+	"github.com/musicmash/auth/internal/api"
 	"github.com/musicmash/auth/internal/backend"
 	"github.com/musicmash/auth/internal/config"
 	"github.com/musicmash/auth/internal/db"
@@ -53,35 +53,42 @@ func main() {
 	mgr, err := db.New(conf.DB.GetConnString())
 	exitIfError(err)
 
-	const callbackPath = "/v1/callbacks/spotify/auth"
-	redirectURL := fmt.Sprintf("https://%s%s", conf.HTTP.DomainName, callbackPath)
-	b := backend.New(mgr, redirectURL, conf.SpotifyApplication.ID, conf.SpotifyApplication.Secret)
-	spotifyCallbackHandler := spotify.NewHandler(b)
-	authHandler := auth.NewHandler(mgr)
-
 	// setup logger
 	log.SetWriters(log.GetConsoleWriter())
 
-	// make router
-	r := chi.NewRouter()
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Logger)
-	r.Get(callbackPath, spotifyCallbackHandler.DoAuth)
-	r.Post("/auth", authHandler.DoAuth)
+	done := make(chan bool, 1)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := context.WithTimeout(context.Background(), conf.HTTP.WriteTimeout)
+	defer cancel()
 
-	// make http server
-	server := server.New(r, &server.Options{
-		IP:           conf.HTTP.IP,
-		Port:         conf.HTTP.Port,
-		ReadTimeout:  conf.HTTP.ReadTimeout,
-		WriteTimeout: conf.HTTP.WriteTimeout,
-		IdleTimeout:  conf.HTTP.IdleTimeout,
-	})
+	redirectURL := fmt.Sprintf("https://%s/v1/callbacks/spotify/auth\"", conf.HTTP.DomainName)
+	b := backend.New(mgr, redirectURL, conf.SpotifyApplication.ID, conf.SpotifyApplication.Secret)
+	router := api.GetRouter(mgr, b)
+	server := api.New(router, conf.HTTP)
+
+	go gracefulShutdown(ctx, server, quit, done)
 
 	log.Infof("Please log in to Spotify by visiting the following page in your browser: %s", b.GetAuthURL("auth"))
+	log.Infof("server is ready to handle requests at: %v", server.Addr)
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		exitIfError(fmt.Errorf("could not listen on %v: %v", server.Addr, err))
+	}
 
-	// and finally listen
-	exitIfError(server.ListenAndServe())
+	<-done
+	mgr.Close()
+	log.Info("auth stopped")
+}
+
+func gracefulShutdown(ctx context.Context, server *api.Server, quit <-chan os.Signal, done chan<- bool) {
+	<-quit
+	log.Info("server is shutting down...")
+
+	server.SetKeepAlivesEnabled(false)
+	if err := server.Shutdown(ctx); err != nil {
+		log.Errorf("could not gracefully shutdown the server: %v", err)
+	}
+	close(done)
 }
 
 func validateConfig(conf *config.AppConfig) error {

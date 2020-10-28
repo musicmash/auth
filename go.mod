@@ -8,6 +8,7 @@ require (
 	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/jackc/pgx/v4 v4.9.0
 	github.com/lib/pq v1.8.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/zerolog v1.20.0
 	github.com/stretchr/testify v1.6.1
 	github.com/zmb3/spotify v0.0.0-20200814173021-9bec46940cc0
