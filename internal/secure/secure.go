@@ -7,8 +7,8 @@ import (
 )
 
 func generateRandomSalt(saltSize int) []byte {
-	var salt = make([]byte, saltSize)
-	_, _ = rand.Read(salt[:])
+	salt := make([]byte, saltSize)
+	_, _ = rand.Read(salt)
 	return salt
 }
 
@@ -16,7 +16,7 @@ func GenerateHashWithSalt(v string, salt []byte) string {
 	bytes := []byte(v)
 	hasher := sha512.New()
 	bytes = append(bytes, salt...)
-	hasher.Write(bytes)
+	_, _ = hasher.Write(bytes)
 	hash := hasher.Sum(nil)
 	return base64.URLEncoding.EncodeToString(hash)
 }

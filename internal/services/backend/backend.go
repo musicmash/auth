@@ -55,7 +55,7 @@ func (b *Backend) GetSession(ctx context.Context, code string) (string, error) {
 	client := b.newSpotifyClient(token)
 	user, err := client.CurrentUser()
 	if err != nil {
-		return "", fmt.Errorf("couldn't get user info: %v", err)
+		return "", fmt.Errorf("couldn't get user info: %w", err)
 	}
 
 	log.Infof("user successfully logged in: %s", user.ID)
