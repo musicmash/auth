@@ -4,8 +4,18 @@ override BUILD_TIME="$(shell date -u '+%Y-%m-%dT%H:%M:%S')"
 
 all:
 
+build:
+	go build -ldflags="-s -w" -v -o dist/auth ./cmd/auth/...
+
+test t:
+	go test -v ./internal/...
+
+lint l:
+	bash ./scripts/revive.sh
+	bash ./scripts/golangci-lint.sh
+
 run:
-	go run ./cmd/...
+	go run -v ./cmd/auth/... --config ./auth.example.yml
 
 compose:
 	docker-compose up -d --build
