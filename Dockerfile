@@ -7,7 +7,7 @@ ENV GOARCH=amd64
 ARG RELEASE=unset
 ARG COMMIT=unset
 ARG BUILD_TIME=unset
-ENV PROJECT=/go/src/github.com/musicmash/auth/internal
+ENV PROJECT=github.com/musicmash/auth
 
 WORKDIR /go/src/github.com/musicmash/auth
 COPY migrations /etc/auth/migrations
