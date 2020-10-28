@@ -12,10 +12,10 @@ import (
 	"syscall"
 
 	"github.com/musicmash/auth/internal/api"
-	"github.com/musicmash/auth/internal/backend"
 	"github.com/musicmash/auth/internal/config"
 	"github.com/musicmash/auth/internal/db"
 	"github.com/musicmash/auth/internal/log"
+	"github.com/musicmash/auth/internal/services/backend"
 	"github.com/musicmash/auth/internal/version"
 )
 
@@ -26,35 +26,50 @@ func main() {
 		os.Exit(0)
 	}
 
-	// parse conf
-	conf := config.New()
-	conf.FlagSet()
-	configPath := flag.String("config", "", "Path to auth.yml config")
 	_ = flag.Bool("help", false, "Show this message and exit")
 	if helpRequired() {
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
 
+	configPath := flag.String("config", "", "abs path to conf file")
 	flag.Parse()
-	if *configPath != "" {
-		if err := conf.LoadFromFile(*configPath); err != nil {
-			exitIfError(err)
-		}
 
-		// set not provided flags as config values
-		conf.FlagReload()
+	if *configPath == "" {
+		_, _ = fmt.Fprintln(os.Stdout, "provide abs path to config via --config argument")
+		return
+	}
 
-		// override config values with provided flags
-		flag.Parse()
+	conf, err := config.LoadFromFile(*configPath)
+	if err != nil {
+		exitIfError(err)
 	}
 	exitIfError(validateConfig(conf))
 
-	mgr, err := db.New(conf.DB.GetConnString())
+	log.SetLevel(conf.Log.Level)
+	log.SetWriters(log.GetConsoleWriter())
+
+	log.Debug(version.FullInfo)
+
+	log.Info("connecting to db...")
+	mgr, err := db.Connect(db.Config{
+		DSN:                     conf.DB.GetConnString(),
+		MaxOpenConnectionsCount: conf.DB.MaxOpenConnections,
+		MaxIdleConnectionsCount: conf.DB.MaxIdleConnections,
+		MaxConnectionIdleTime:   conf.DB.MaxConnectionIdleTime,
+		MaxConnectionLifetime:   conf.DB.MaxConnectionLifeTime,
+	})
 	exitIfError(err)
 
-	// setup logger
-	log.SetWriters(log.GetConsoleWriter())
+	log.Info("connection to the db established")
+
+	if conf.DB.AutoMigrate {
+		log.Info("applying migrations..")
+		err = mgr.ApplyMigrations(conf.DB.MigrationsDir)
+		if err != nil {
+			exitIfError(fmt.Errorf("cant-t apply migrations: %v", err))
+		}
+	}
 
 	done := make(chan bool, 1)
 	quit := make(chan os.Signal, 1)
@@ -76,7 +91,7 @@ func main() {
 	}
 
 	<-done
-	mgr.Close()
+	_ = mgr.Close()
 	log.Info("auth stopped")
 }
 

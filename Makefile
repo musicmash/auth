@@ -13,14 +13,20 @@ image:
 		--compress \
 		-t auth:latest .
 
-db-status:
-	sql-migrate status --env=staging
+ensure-go-migrate-installed:
+	bash ./scripts/install-go-migrate.sh
 
-db-up:
-	sql-migrate up --env=staging
+db-generate:
+	sqlc generate
 
-db-redo:
-	sql-migrate redo --env=staging
+# show latest applied migration
+db-status: ensure-go-migrate-installed
+	migrate -path migrations -database "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" -verbose version
 
-db-down:
-	sql-migrate down --env=staging
+# apply migration up
+db-up: ensure-go-migrate-installed
+	migrate -path migrations -database "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" -verbose up
+
+# apply migration down
+db-down: ensure-go-migrate-installed
+	migrate -path migrations -database "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" -verbose down

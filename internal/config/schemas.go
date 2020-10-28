@@ -23,11 +23,17 @@ type LogConfig struct {
 }
 
 type DBConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	Name     string `yaml:"name"`
-	Login    string `yaml:"login"`
-	Password string `yaml:"password"`
+	Host                  string        `yaml:"host"`
+	Port                  int           `yaml:"port"`
+	Name                  string        `yaml:"name"`
+	Login                 string        `yaml:"login"`
+	Password              string        `yaml:"password"`
+	AutoMigrate           bool          `yaml:"auto_migrate"`
+	MaxOpenConnections    int           `yaml:"max_open_connections"`
+	MaxIdleConnections    int           `yaml:"max_idle_connections"`
+	MaxConnectionLifeTime time.Duration `yaml:"max_connection_life_time"`
+	MaxConnectionIdleTime time.Duration `yaml:"max_connection_idle_time"`
+	MigrationsDir         string        `yaml:"migrations_dir"`
 }
 
 type SpotifyApplication struct {

@@ -2,9 +2,11 @@ package backend
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/musicmash/auth/internal/db"
+	"github.com/musicmash/auth/internal/db/models"
 	"github.com/musicmash/auth/internal/log"
 	"github.com/musicmash/auth/internal/secure"
 	"github.com/zmb3/spotify"
@@ -13,10 +15,10 @@ import (
 
 type Backend struct {
 	config *oauth2.Config
-	mgr    *db.Mgr
+	mgr    *db.Conn
 }
 
-func New(mgr *db.Mgr, redirectURL, appID, appSecret string, scopes ...string) *Backend {
+func New(mgr *db.Conn, redirectURL, appID, appSecret string, scopes ...string) *Backend {
 	cfg := oauth2.Config{
 		ClientID:     appID,
 		ClientSecret: appSecret,
@@ -34,15 +36,15 @@ func (b *Backend) newSpotifyClient(token *oauth2.Token) spotify.Client {
 	return spotify.NewClient(b.config.Client(context.Background(), token))
 }
 
-func getUserPhoto(images []spotify.Image) *string {
+func getUserPhoto(images []spotify.Image) string {
 	if len(images) == 0 {
-		return nil
+		return ""
 	}
 
-	return &images[0].URL
+	return images[0].URL
 }
 
-func (b *Backend) GetSession(code string) (string, error) {
+func (b *Backend) GetSession(ctx context.Context, code string) (string, error) {
 	// retrieve access token
 	token, err := b.config.Exchange(context.Background(), code)
 	if err != nil {
@@ -59,7 +61,14 @@ func (b *Backend) GetSession(code string) (string, error) {
 	log.Infof("user successfully logged in: %s", user.ID)
 
 	// ensure that user exists in the db
-	err = b.mgr.EnsureUserExists(&db.User{Name: user.ID, Photo: getUserPhoto(user.Images)})
+	userPhoto := getUserPhoto(user.Images)
+	err = b.mgr.EnsureUserExists(ctx, models.EnsureUserExistsParams{
+		Name: user.ID,
+		Photo: sql.NullString{
+			String: userPhoto,
+			Valid:  len(userPhoto) > 0,
+		},
+	})
 	if err != nil {
 		return "", fmt.Errorf("can't ensure that user exists: %w", err)
 	}
@@ -68,7 +77,7 @@ func (b *Backend) GetSession(code string) (string, error) {
 	sid := secure.GenerateHash(token.AccessToken)
 
 	// save session into the db
-	err = b.mgr.CreateSession(&db.Session{UserName: user.ID, Value: sid})
+	err = b.mgr.CreateSession(ctx, models.CreateSessionParams{UserName: user.ID, Value: sid})
 	if err != nil {
 		return "", fmt.Errorf("can't create new user session: %w", err)
 	}

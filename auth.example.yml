@@ -2,6 +2,9 @@
 http:
   ip: 0.0.0.0
   port: 1200
+  read_timeout: 10s
+  write_timeout: 10s
+  idle_timeout: 10s
   domain_name: musicmash.me
 
 db:
@@ -10,6 +13,12 @@ db:
   name: auth
   login: auth
   password: auth_pass
+  max_open_connections: 10
+  max_idle_connections: 10
+  max_connection_life_time: 5m
+  max_connection_idle_time: 3m
+  auto_migrate: true
+  migrations_dir: file:///var/auth/migrations
 
 log:
   level: INFO
