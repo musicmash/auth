@@ -23,7 +23,7 @@ RUN go build -v -a \
        -X ${PROJECT}/internal/version.BuildTime=${BUILD_TIME}" \
     -o /usr/local/bin/auth ./cmd/...
 
-FROM alpine:latest
+FROM alpine:latest as auth
 
 RUN addgroup -S auth && adduser -S auth -G auth
 USER auth
