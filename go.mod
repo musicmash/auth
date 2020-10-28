@@ -4,10 +4,11 @@ go 1.13
 
 require (
 	github.com/go-chi/chi v4.1.2+incompatible
+	github.com/golang-migrate/migrate/v4 v4.13.0
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.2 // indirect
-	github.com/jackc/pgx/v4 v4.9.0
-	github.com/lib/pq v1.8.0 // indirect
+	github.com/jackc/pgx/v4 v4.9.0 // indirect
+	github.com/lib/pq v1.8.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/zerolog v1.20.0
 	github.com/stretchr/testify v1.6.1

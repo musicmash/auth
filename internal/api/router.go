@@ -9,7 +9,7 @@ import (
 	"github.com/musicmash/auth/internal/db"
 )
 
-func GetRouter(mgr *db.Mgr, backend *backend.Backend) chi.Router {
+func GetRouter(mgr *db.Conn, backend *backend.Backend) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)

@@ -51,7 +51,7 @@ func (c *Controller) DoAuth(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 	}
 
-	sid, err := c.backend.GetSession(values.Get("code"))
+	sid, err := c.backend.GetSession(r.Context(), values.Get("code"))
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		log.Error(err.Error())

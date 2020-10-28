@@ -9,10 +9,10 @@ import (
 
 
 type Controller struct {
-	mgr *db.Mgr
+	mgr *db.Conn
 }
 
-func New(mgr *db.Mgr) *Controller {
+func New(mgr *db.Conn) *Controller {
 	return &Controller{mgr: mgr}
 }
 
@@ -30,7 +30,7 @@ func (c *Controller) DoAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := c.mgr.GetSession(cookie.Value)
+	session, err := c.mgr.GetSession(r.Context(), cookie.Value)
 	if err != nil {
 		log.Info("someone provided empty sid cookie")
 		w.WriteHeader(http.StatusUnauthorized)
