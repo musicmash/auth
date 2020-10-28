@@ -87,7 +87,7 @@ func (conn *Conn) ApplyMigrations(filePath string) error {
 		"postgres",
 		driver,
 	)
-	if err != nil && !errors.Is(err, migrate.ErrNoChange){
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return fmt.Errorf("can't create migrate file driver: %w", err)
 	}
 

@@ -8,17 +8,17 @@ http:
   domain_name: musicmash.me
 
 db:
-  host: musicmash.db
-  port: 5432
-  name: auth
-  login: auth
-  password: auth_pass
+  host: ${DB_HOST}
+  port: ${DB_PORT}
+  name: ${DB_NAME}
+  login: ${DB_USER}
+  password: ${DB_PASSWORD}
   max_open_connections: 10
   max_idle_connections: 10
   max_connection_life_time: 5m
   max_connection_idle_time: 3m
   auto_migrate: true
-  migrations_dir: file:///var/auth/migrations
+  migrations_dir: file:///etc/auth/migrations
 
 log:
   level: INFO

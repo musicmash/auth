@@ -5,17 +5,22 @@ import (
 	"net/url"
 )
 
-const state = "auth"
+const stateAuth = "auth"
+
+var (
+	errCodeIsEmpty  = errors.New("query arg 'code' is empty")
+	errUnknownState = errors.New("unknown state")
+)
 
 func validateStateAndCode(values url.Values) error {
 	code := values.Get("code")
 	if code == "" {
-		return errors.New("didn't get access code")
+		return errCodeIsEmpty
 	}
 
 	actualState := values.Get("state")
-	if actualState != state {
-		return errors.New("redirect state parameter doesn't match")
+	if actualState != stateAuth {
+		return errUnknownState
 	}
 
 	return nil

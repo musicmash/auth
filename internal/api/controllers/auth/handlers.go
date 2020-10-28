@@ -7,7 +7,6 @@ import (
 	"github.com/musicmash/auth/internal/log"
 )
 
-
 type Controller struct {
 	mgr *db.Conn
 }

@@ -1,0 +1,49 @@
+version: "3"
+services:
+  db:
+   image: postgres:12
+   container_name: auth.db
+   ports:
+     - "5432:5432"
+   environment:
+     - POSTGRES_USER=auth
+     - POSTGRES_PASSWORD=auth
+     - POSTGRES_DB=auth
+
+   # IMPORTANT: this container uses only for tests
+   # DO NOT EXEC QUERIES ON IT!
+  test_db:
+   image: postgres:12
+   container_name: auth.test_db
+   ports:
+     - "2345:5432"
+   environment:
+     - POSTGRES_DB=auth_db_ONLY_FOR_AUTOMATED_TESTS
+     - POSTGRES_USER=DO_NOT_EXEC_QUERIES_ON_IT
+     - POSTGRES_PASSWORD=cf78e82e-7b64-4b1c-8598-b16a341c06e9
+
+  sources:
+    image: golang:latest
+    container_name: auth.sources
+    depends_on:
+      - db
+      - test_db
+    volumes:
+      - ./:/go/src/auth
+      - ./migrations:/etc/auth/migrations
+    working_dir: /go/src/auth
+    environment:
+      - DB_HOST=auth.db
+      - DB_PORT=5432
+      - DB_NAME=auth
+      - DB_USER=auth
+      - DB_PASSWORD=auth
+
+      - TEST_DB_HOST=auth.test_db
+      - TEST_DB_PORT=5432
+      - TEST_DB_NAME=auth_db_ONLY_FOR_AUTOMATED_TESTS
+      - TEST_DB_USER=DO_NOT_EXEC_QUERIES_ON_IT
+      - TEST_DB_PASSWORD=cf78e82e-7b64-4b1c-8598-b16a341c06e9
+    stdin_open: true
+    tty: true
+    command: ["/bin/bash"]

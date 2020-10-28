@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -19,6 +18,7 @@ import (
 	"github.com/musicmash/auth/internal/version"
 )
 
+//nolint:funclen
 func main() {
 	_ = flag.Bool("version", false, "Show build info and exit")
 	if versionRequired() {
@@ -67,7 +67,7 @@ func main() {
 		log.Info("applying migrations..")
 		err = mgr.ApplyMigrations(conf.DB.MigrationsDir)
 		if err != nil {
-			exitIfError(fmt.Errorf("cant-t apply migrations: %v", err))
+			exitIfError(fmt.Errorf("cant-t apply migrations: %w", err))
 		}
 	}
 
@@ -112,15 +112,15 @@ func validateConfig(conf *config.AppConfig) error {
 	}
 
 	if conf.HTTP.Port < 0 || conf.HTTP.Port > 65535 {
-		return errors.New("invalid port: value should be in range: 0 < value < 65535")
+		return errInvalidPort
 	}
 
 	if len(conf.HTTP.DomainName) == 0 {
-		return errors.New("nginx domain name is empty, so we can't build redirect url")
+		return errEmptyDomain
 	}
 
 	if len(conf.SpotifyApplication.ID) == 0 || len(conf.SpotifyApplication.Secret) == 0 {
-		return errors.New("spotify application credentials are empty")
+		return errEmptyCredentials
 	}
 
 	return nil
