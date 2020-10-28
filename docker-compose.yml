@@ -30,7 +30,7 @@ services:
       - test_db
     volumes:
       - ./:/go/src/auth
-      - ./migrations:/etc/auth/migrations
+      - ./migrations:/var/auth/migrations
     working_dir: /go/src/auth
     environment:
       - DB_HOST=auth.db
