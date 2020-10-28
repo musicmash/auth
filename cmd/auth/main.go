@@ -46,11 +46,16 @@ func main() {
 	}
 	exitIfError(validateConfig(conf))
 
+	log.SetLevel(conf.Log.Level)
+	log.SetWriters(log.GetConsoleWriter())
+
+	log.Debug(version.FullInfo)
+
+	log.Info("connecting to db...")
 	mgr, err := db.New(conf.DB.GetConnString())
 	exitIfError(err)
 
-	// setup logger
-	log.SetWriters(log.GetConsoleWriter())
+	log.Info("connection to the db established")
 
 	done := make(chan bool, 1)
 	quit := make(chan os.Signal, 1)
