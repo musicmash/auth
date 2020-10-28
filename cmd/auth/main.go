@@ -91,7 +91,7 @@ func main() {
 	}
 
 	<-done
-	mgr.Close()
+	_ = mgr.Close()
 	log.Info("auth stopped")
 }
 
