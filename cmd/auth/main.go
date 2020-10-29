@@ -77,7 +77,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), conf.HTTP.WriteTimeout)
 	defer cancel()
 
-	redirectURL := fmt.Sprintf("https://%s/v1/callbacks/spotify/auth\"", conf.HTTP.DomainName)
+	redirectURL := fmt.Sprintf("https://%s/v1/callbacks/spotify/auth", conf.HTTP.DomainName)
 	b := backend.New(mgr, redirectURL, conf.SpotifyApplication.ID, conf.SpotifyApplication.Secret)
 	router := api.GetRouter(mgr, b)
 	server := api.New(router, conf.HTTP)
