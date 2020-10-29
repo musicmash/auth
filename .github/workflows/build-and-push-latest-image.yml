@@ -64,7 +64,6 @@ jobs:
 
       - name: Push image to hubs
         run: |
-
           docker push $IMAGE_NAME:latest
           docker push docker.pkg.github.com/$IMAGE_NAME/auth:latest
 
