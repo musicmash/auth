@@ -43,22 +43,15 @@ jobs:
 
       - name: Pull latest images
         run: |
-          docker pull $IMAGE_NAME-builder-stage:latest || true
           docker pull $IMAGE_NAME:latest || true
 
       - name: Build the Docker image
         run: |
           docker build \
-            --target builder \
-            --cache-from $IMAGE_NAME-builder-stage:latest \
-            -t $IMAGE_NAME-builder-stage \
-            .
-          docker build \
             --target auth \
             --build-arg RELEASE=${GITHUB_REF##*/} \
             --build-arg COMMIT=${GITHUB_SHA} \
             --build-arg BUILD_TIME=$(date -u '+%Y-%m-%dT%H:%M:%S') \
-            --cache-from $IMAGE_NAME-builder-stage:latest \
             --cache-from $IMAGE_NAME:latest \
             --tag $IMAGE_NAME:latest \
             --tag docker.pkg.github.com/$IMAGE_NAME/auth:latest \
@@ -75,7 +68,6 @@ jobs:
 
       - name: Push image to hubs
         run: |
-          docker push $IMAGE_NAME-builder-stage:latest
 
           docker push $IMAGE_NAME:latest
           docker push docker.pkg.github.com/$IMAGE_NAME/auth:latest
