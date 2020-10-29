@@ -22,7 +22,7 @@ func GetRouter(mgr *db.Conn, backend *backend.Backend) chi.Router {
 		r.Use(middleware.Logger)
 
 		r.Mount("/auth", auth.New(mgr).GetRouter())
-		r.Mount("/v1/callbacks/spotify", spotify.New(backend).GetRouter())
+		r.Mount("/callbacks/spotify", spotify.New(backend).GetRouter())
 	})
 
 	return r
