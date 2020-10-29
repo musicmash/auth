@@ -33,7 +33,7 @@ func TestConfig_LoadFromFile(t *testing.T) {
 			Login:                 "auth",
 			Password:              "auth",
 			AutoMigrate:           true,
-			MigrationsDir:         "file:///etc/auth/migrations",
+			MigrationsDir:         "file:///var/auth/migrations",
 			MaxOpenConnections:    10,
 			MaxIdleConnections:    10,
 			MaxConnectionIdleTime: 3 * time.Minute,
