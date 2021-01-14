@@ -5,7 +5,7 @@ import "github.com/go-chi/chi"
 func (c *Controller) GetRouter() chi.Router {
 	r := chi.NewRouter()
 
-	r.Post("/user/info", c.Get)
+	r.Get("/user/info", c.Get)
 
 	return r
 }
