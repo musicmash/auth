@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/musicmash/auth/internal/api/controllers/auth"
 	"github.com/musicmash/auth/internal/api/controllers/spotify"
+	"github.com/musicmash/auth/internal/api/controllers/user"
 	"github.com/musicmash/auth/internal/db"
 	"github.com/musicmash/auth/internal/services/backend"
 )
@@ -23,6 +24,7 @@ func GetRouter(mgr *db.Conn, backend *backend.Backend) chi.Router {
 
 		r.Mount("/auth", auth.New(mgr).GetRouter())
 		r.Mount("/callbacks/spotify", spotify.New(backend).GetRouter())
+		r.Mount("/", user.New(mgr).GetRouter())
 	})
 
 	return r
