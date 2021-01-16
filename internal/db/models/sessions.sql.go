@@ -22,6 +22,16 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) er
 	return err
 }
 
+const deleteSession = `-- name: DeleteSession :exec
+DELETE FROM sessions
+where value = $1
+`
+
+func (q *Queries) DeleteSession(ctx context.Context, value string) error {
+	_, err := q.db.ExecContext(ctx, deleteSession, value)
+	return err
+}
+
 const getSession = `-- name: GetSession :one
 SELECT id, created_at, user_name, value FROM sessions
 where value = $1
