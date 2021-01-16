@@ -22,27 +22,20 @@ func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("sid")
 	if err != nil {
 		log.Info("someone forget to provided sid cookie")
-		// return 400 instead of 401 to avoid network error on the browser side
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	if len(cookie.Value) == 0 {
 		log.Info("someone provided empty sid cookie")
-		// return 400 instead of 401 to avoid network error on the browser side
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	_, err = c.mgr.GetSession(r.Context(), cookie.Value)
-	if errors.Is(err, sql.ErrNoRows) {
-		// return 400 instead of 401 to avoid network error on the browser side
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
 	if err != nil {
-		log.Error(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Info("someone provided empty sid cookie")
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
