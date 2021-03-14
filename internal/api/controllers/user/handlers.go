@@ -32,10 +32,17 @@ func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO (m.kalinin): extract that code to services/backend
 	_, err = c.mgr.GetSession(r.Context(), cookie.Value)
-	if err != nil {
-		log.Info("someone provided empty sid cookie")
+	if errors.Is(err, sql.ErrNoRows) {
+		log.Info("someone provided unknown sid value")
+		http.SetCookie(w, getDeleteSidCookie())
 		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	if err != nil {
+		log.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -59,6 +66,8 @@ func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 	// TODO (m.kalinin): extract that code to services/backend
 	session, err := c.mgr.GetSession(r.Context(), cookie.Value)
 	if errors.Is(err, sql.ErrNoRows) {
+		log.Info("someone provided unknown sid value")
+		http.SetCookie(w, getDeleteSidCookie())
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
