@@ -36,6 +36,7 @@ func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 	_, err = c.mgr.GetSession(r.Context(), cookie.Value)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Info("someone provided unknown sid value")
+		http.SetCookie(w, getDeleteSidCookie())
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -66,6 +67,7 @@ func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 	session, err := c.mgr.GetSession(r.Context(), cookie.Value)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Info("someone provided unknown sid value")
+		http.SetCookie(w, getDeleteSidCookie())
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
