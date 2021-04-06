@@ -14,6 +14,7 @@ COPY migrations /var/auth/migrations
 COPY cmd cmd
 COPY internal internal
 COPY go.mod go.mod
+COPY go.sum go.sum
 
 RUN go build -v -a \
     -gcflags "all=-trimpath=${WORKDIR}" \
